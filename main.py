@@ -86,7 +86,7 @@ def evaluate(data_iter, model, device, PAD_IDX):
                 true_label = torch.tensor(true_label[true_label != 0])
                 predict_label = torch.tensor(logits[i])
                 acc += (predict_label == true_label).float().sum().item()
-            n += len(label)
+                n += len(predict_label)
         model.train()
         return acc / n
 

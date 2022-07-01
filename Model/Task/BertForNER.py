@@ -77,6 +77,9 @@ if __name__ == '__main__':
             true_label = torch.tensor(true_label[true_label != 0])
             predict_label = torch.tensor(labels[i])
             acc += (predict_label == true_label).float().mean()
+            # print((predict_label == true_label))
+            # print(len(predict_label))
+            # print((predict_label == true_label).float().sum().item())
         acc = acc / len(label)
         print(acc)
         break

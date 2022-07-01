@@ -16,7 +16,7 @@ class Model_config:
         # 数据集路径
         self.zh_msra_dir = os.path.join(self.project_dir, 'Data', 'zh_msra')
         # 选择设备
-        self.device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+        self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
         # 训练集路径
         self.zh_msra_train_file_path = os.path.join(self.zh_msra_dir, 'train.char.bmes')
         # 验证集路径
