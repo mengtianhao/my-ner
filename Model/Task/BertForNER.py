@@ -44,6 +44,35 @@ class BertForNER(nn.Module):
             return labels
 
 
+# 计算预测精确度，按实体计算
+def calculate(predict_labels, true_labels):
+    true_labels = true_labels.transpose(0, 1).to('cpu').numpy()
+    acc, true, n = 0.0, 0, 0
+    for i in range(len(true_labels)):
+        true_label = true_labels[i]
+        # 去掉真实标签中的padding项
+        true_label = torch.tensor(true_label[true_label != 0])
+        predict_label = torch.tensor(predict_labels[i])
+        # 去掉预测标签和真实标签中的'[CLS]', '[SEP]', 'O'项,分别在字典中显示为1，2，3
+        new_true_label = []
+        new_predict_label = []
+        for j in range(len(true_label)):
+            if true_label[j] != torch.tensor(1):
+                if true_label[j] != torch.tensor(2):
+                    if true_label[j] != torch.tensor(3):
+                        new_true_label.append(true_label[j])
+                        new_predict_label.append(predict_label[j])
+        true_label = torch.tensor(new_true_label)
+        predict_label = torch.tensor(new_predict_label)
+        true += (predict_label == true_label).float().sum().item()
+        n += len(predict_label)
+    if n == 0:
+        acc = 1.0
+    else:
+        acc = true / n
+    return acc, true, n
+
+
 if __name__ == '__main__':
     config = Model_config()
     model = BertForNER(config, config.pretrained_model_dir)
@@ -69,17 +98,31 @@ if __name__ == '__main__':
                              position_ids=None,
                              labels=label)
         print(loss)
-        print(labels)
+        # print(labels)
+        print(calculate(labels, label))
         label = label.transpose(0, 1).to('cpu').numpy()
-        acc = 0.0
+        acc, true, n = 0.0, 0, 0
         for i in range(len(label)):
             true_label = label[i]
+            # 去掉真实标签中的padding项
             true_label = torch.tensor(true_label[true_label != 0])
             predict_label = torch.tensor(labels[i])
-            acc += (predict_label == true_label).float().mean()
-            # print((predict_label == true_label))
-            # print(len(predict_label))
-            # print((predict_label == true_label).float().sum().item())
-        acc = acc / len(label)
-        print(acc)
+            # 去掉预测标签和真实标签中的'[CLS]', '[SEP]', 'O'项,分别在字典中显示为1，2，3
+            new_true_label = []
+            new_predict_label = []
+            for j in range(len(true_label)):
+                if true_label[j] != torch.tensor(1):
+                    if true_label[j] != torch.tensor(2):
+                        if true_label[j] != torch.tensor(3):
+                            new_true_label.append(true_label[j])
+                            new_predict_label.append(predict_label[j])
+            true_label = torch.tensor(new_true_label)
+            predict_label = torch.tensor(new_predict_label)
+            true += (predict_label == true_label).float().sum().item()
+            n += len(predict_label)
+        if n == 0:
+            acc = 1.0
+        else:
+            acc = true / n
+        print(acc, true, n)
         break
