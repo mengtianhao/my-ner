@@ -49,12 +49,17 @@ def train(config):
             if idx % 10 == 0:
                 logging.info(f"Epoch: {epoch}, Batch[{idx}/{len(train_iter)}], "
                              f"Train loss :{loss.item():.3f}, Train acc: {acc:.3f}")
+                # 增加tensorboard显示
+                config.writer.add_scalar('Training/Loss', loss.item(), epoch)
+                config.writer.add_scalar('Training/Accuracy', acc, epoch)
+                #
         end_time = time.time()
         train_loss = losses / len(train_iter)
         logging.info(f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Epoch time = {(end_time - start_time):.3f}s")
         if (epoch + 1) % config.model_val_per_epoch == 0:
             acc = evaluate(val_iter, model, config.device, data_loader.PAD_IDX)
             logging.info(f"Accuracy on val {acc:.3f}")
+            config.writer.add_scalar('evaluating/Accuracy', acc, epoch)
             if acc > max_acc:
                 max_acc = acc
                 torch.save(model.state_dict(), model_save_path)

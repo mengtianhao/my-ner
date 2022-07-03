@@ -3,6 +3,7 @@ import torch
 import logging
 from utils.log_helper import logger_init
 from Model.BasicBert.BertConfig import BertConfig
+from torch.utils.tensorboard import SummaryWriter
 
 
 class Model_config:
@@ -33,6 +34,10 @@ class Model_config:
         self.max_sen_len = None
         # 训练次数（epoch次数）
         self.epochs = 10
+        # 项目名称
+        self.data_name = 'my-ner'
+        # TensorBoard神经网络可视化工具
+        self.writer = SummaryWriter(f"runs/{self.data_name}")
         # 模型保存路径
         self.model_save_dir = os.path.join(self.project_dir, 'cache')
         if not os.path.exists(self.model_save_dir):
