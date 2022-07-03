@@ -34,6 +34,11 @@ class Model_config:
         self.max_sen_len = None
         # 训练次数（epoch次数）
         self.epochs = 10
+        # 下接结构
+        self.num_layers = 1  # 下游层数
+        self.drop_prob = 0.1  # drop_out率
+        # bilstm
+        self.lstm_hidden = 256
         # 项目名称
         self.data_name = 'my-ner'
         # TensorBoard神经网络可视化工具

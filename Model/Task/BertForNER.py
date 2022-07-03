@@ -4,7 +4,7 @@ from Model.BasicBert.Bert import BertModel
 from Model.Classifier.MyCRF import MyCRF
 from Config.Model_config import Model_config
 from utils.data_helpers import LoadDataset
-import numpy as np
+from Model.BiLSTM.BiLSTM import BiLSTM
 
 
 class BertForNER(nn.Module):
@@ -14,8 +14,13 @@ class BertForNER(nn.Module):
             self.bert = BertModel.from_pretrained(config, bert_pretrained_model_dir)
         else:
             self.bert = BertModel(config)
+        self.bilstm = BiLSTM(tag_size=config.labels_num,
+                             embedding_size=config.hidden_size,
+                             hidden_size=config.lstm_hidden,
+                             num_layers=config.num_layers,
+                             dropout=config.drop_prob, with_ln=True)
         self.dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.classifier = nn.Linear(config.hidden_size, config.labels_num)
+        # self.classifier = nn.Linear(config.hidden_size, config.labels_num)
         self.crf = MyCRF(config.labels_num)
 
     def forward(self, input_ids, attention_mask=None, token_type_ids=None, position_ids=None, labels=None, is_test=False):
@@ -30,9 +35,12 @@ class BertForNER(nn.Module):
         pooled_output, all_output = self.bert(input_ids=input_ids,
                                      attention_mask=attention_mask,
                                      token_type_ids=token_type_ids,
-                                     position_ids=position_ids)  # [batch_size,hidden_size]
-        pooled_output = self.dropout(pooled_output)
-        pooled_output = self.classifier(pooled_output)  # [batch_size, num_label]
+                                     position_ids=position_ids)  # [src_len, batch_size, hidden_size]
+        pooled_output = self.dropout(pooled_output)  # [src_len, batch_size, hidden_size]
+        # 加一层BiLSTM
+        pooled_output = self.bilstm.get_lstm_features(pooled_output, ~attention_mask.transpose(1, 0))
+        # [src_len, batch_size, num_label]
+        # pooled_output = self.classifier(pooled_output)  # [src_len, batch_size, num_label]
         pooled_output = pooled_output.transpose(0, 1)
         labels = labels.transpose(0, 1)
         label_mask = ~attention_mask
@@ -99,30 +107,5 @@ if __name__ == '__main__':
                              labels=label)
         print(loss)
         # print(labels)
-        print(calculate(labels, label))
-        label = label.transpose(0, 1).to('cpu').numpy()
-        acc, true, n = 0.0, 0, 0
-        for i in range(len(label)):
-            true_label = label[i]
-            # 去掉真实标签中的padding项
-            true_label = torch.tensor(true_label[true_label != 0])
-            predict_label = torch.tensor(labels[i])
-            # 去掉预测标签和真实标签中的'[CLS]', '[SEP]', 'O'项,分别在字典中显示为1，2，3
-            new_true_label = []
-            new_predict_label = []
-            for j in range(len(true_label)):
-                if true_label[j] != torch.tensor(1):
-                    if true_label[j] != torch.tensor(2):
-                        if true_label[j] != torch.tensor(3):
-                            new_true_label.append(true_label[j])
-                            new_predict_label.append(predict_label[j])
-            true_label = torch.tensor(new_true_label)
-            predict_label = torch.tensor(new_predict_label)
-            true += (predict_label == true_label).float().sum().item()
-            n += len(predict_label)
-        if n == 0:
-            acc = 1.0
-        else:
-            acc = true / n
-        print(acc, true, n)
+        # print(calculate(labels, label))
         break
