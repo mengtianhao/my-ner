@@ -46,8 +46,8 @@ def train(config):
                                                                            config.test_file_path)
 
     for epoch in range(config.epochs):
-        losses = 0
-        acces = 0
+        losses = 0  # 总的损失率
+        acces = 0   # 总的精确率
         start_time = time.time()
         for idx, (sample, label) in enumerate(train_iter):
             sample = sample.to(config.device)
