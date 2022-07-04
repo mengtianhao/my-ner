@@ -173,13 +173,8 @@ class BertPooler(nn.Module):
         :param hidden_states:  [src_len, batch_size, hidden_size]
         :return: [batch_size, hidden_size]
         """
-        if self.config.pooler_type == "first_token_transform":
-            token_tensor = hidden_states[0, :].reshape(-1, self.config.hidden_size)
-        elif self.config.pooler_type == "all_token_average":
-            token_tensor = torch.mean(hidden_states, dim=0)
         pooled_output = self.dense(hidden_states)  # [src_len, batch_size, hidden_size]
-        pooled_output = self.activation(pooled_output)
-        # [batch_size, hidden_size]
+        pooled_output = self.activation(pooled_output)  # [src_len, batch_size, hidden_size]
         return pooled_output
 
 
@@ -217,7 +212,8 @@ class BertModel(nn.Module):
         # all_encoder_outputs 为一个包含有num_hidden_layers个层的输出
         sequence_output = all_encoder_outputs[-1]  # 取最后一层
         # sequence_output: [src_len, batch_size, hidden_size]
-        pooled_output = self.bert_pooler(sequence_output)
+        # pooled_output = self.bert_pooler(sequence_output)
+        pooled_output = sequence_output
         # 默认是最后一层的first token 即[cls]位置经dense + tanh 后的结果
         # pooled_output: [batch_size, hidden_size]
         return pooled_output, all_encoder_outputs
