@@ -12,7 +12,8 @@ def inference(config):
     model = BertForNER(config, config.pretrained_model_dir)
     model_save_path = os.path.join(config.model_save_dir, 'model.pt')
     if os.path.exists(model_save_path):
-        loaded_paras = torch.load(model_save_path)
+        checkpoint = torch.load(model_save_path)
+        loaded_paras = checkpoint['model_state_dict']
         model.load_state_dict(loaded_paras)
         logging.info("## 成功载入已有模型，进行预测......")
     model = model.to(config.device)
