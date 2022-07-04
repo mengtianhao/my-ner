@@ -29,7 +29,7 @@ class Model_config:
         # 标签种类数
         self.labels_num = 16
         # 批处理大小
-        self.batch_size = 4
+        self.batch_size = 16
         # 句子的最大长度
         self.max_sen_len = None
         # 训练次数（epoch次数）

@@ -15,7 +15,19 @@ def train(config):
         model.load_state_dict(loaded_paras)
         logging.info("## 成功载入已有模型，进行追加训练......")
     model = model.to(config.device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=5e-5)
+    # 不冻结的部分参数
+    unfreeze_layers = ['bert_layers.11', 'bert_pooler', 'bilstm', 'crf']
+    # 打印模型参数
+    # for name, param in model.named_parameters():
+    #     print(name, param.size())
+    for name, param in model.named_parameters():
+        param.requires_grad = False
+        for ele in unfreeze_layers:
+            if ele in name:
+                param.requires_grad = True
+                break
+    # 过滤掉requires_grad = False的参数
+    optimizer = torch.optim.Adam(filter(lambda p: p.requires_grad, model.parameters()), lr=5e-5)
     model.train()
     data_loader = LoadDataset(
         vocab_path=config.vocab_path,
