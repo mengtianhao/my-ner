@@ -24,6 +24,11 @@
 
 链接：「my-ner」等文件 https://www.aliyundrive.com/s/gPEadaF9YNg 提取码: pj48 点击链接保存，或者复制本段内容，打开「阿里云盘」APP ，无需下载极速在线查看，视频原画倍速播放。
 
+## 4.数据集
+
+### 4.1 zh_msra
+
+### 4.2 zh_ontoontes4
 
 
 
