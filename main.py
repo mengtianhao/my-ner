@@ -10,8 +10,11 @@ from utils.data_helpers import LoadDataset
 def train(config):
     model = BertForNER(config, config.pretrained_model_dir)
     model_save_path = os.path.join(config.model_save_dir, 'model.pt')
+    max_acc = 0
     if os.path.exists(model_save_path):
-        loaded_paras = torch.load(model_save_path)
+        checkpoint = torch.load(model_save_path)
+        max_acc = checkpoint['max_acc']
+        loaded_paras = checkpoint['model_state_dict']
         model.load_state_dict(loaded_paras)
         logging.info("## 成功载入已有模型，进行追加训练......")
     model = model.to(config.device)
@@ -35,14 +38,16 @@ def train(config):
         max_sen_len=config.max_sen_len,
         max_position_embeddings=config.max_position_embeddings,
         pad_index=config.pad_token_id,
-        is_sample_shuffle=config.is_sample_shuffle
+        is_sample_shuffle=config.is_sample_shuffle,
+        labels_name=config.labels_name
     )
-    train_iter, val_iter, test_iter = data_loader.load_train_val_test_data(config.zh_msra_train_file_path,
-                                                                            config.zh_msra_val_file_path,
-                                                                            config.zh_msra_test_file_path)
-    max_acc = 0
+    train_iter, val_iter, test_iter = data_loader.load_train_val_test_data(config.train_file_path,
+                                                                           config.val_file_path,
+                                                                           config.test_file_path)
+
     for epoch in range(config.epochs):
         losses = 0
+        acces = 0
         start_time = time.time()
         for idx, (sample, label) in enumerate(train_iter):
             sample = sample.to(config.device)
@@ -58,23 +63,27 @@ def train(config):
             optimizer.step()
             losses += loss.item()
             acc, _true, _n = calculate(labels, label)
+            acces += acc
             if idx % 10 == 0:
                 logging.info(f"Epoch: {epoch}, Batch[{idx}/{len(train_iter)}], "
                              f"Train loss :{loss.item():.3f}, Train acc: {acc:.3f}")
-                # 增加tensorboard显示
-                config.writer.add_scalar('Training/Loss', loss.item(), epoch)
-                config.writer.add_scalar('Training/Accuracy', acc, epoch)
-                #
         end_time = time.time()
         train_loss = losses / len(train_iter)
+        train_acc = acces / len(train_iter)
         logging.info(f"Epoch: {epoch}, Train loss: {train_loss:.3f}, Epoch time = {(end_time - start_time):.3f}s")
+        # 增加tensorboard显示
+        config.writer.add_scalar('Training/Loss', train_loss, epoch)
+        config.writer.add_scalar('Training/Accuracy', train_acc, epoch)
+        #
         if (epoch + 1) % config.model_val_per_epoch == 0:
             acc = evaluate(val_iter, model, config.device, data_loader.PAD_IDX)
             logging.info(f"Accuracy on val {acc:.3f}")
             config.writer.add_scalar('evaluating/Accuracy', acc, epoch)
             if acc > max_acc:
                 max_acc = acc
-                torch.save(model.state_dict(), model_save_path)
+                state_dict = model.state_dict()
+                torch.save({'max_acc': max_acc,
+                            'model_state_dict': state_dict}, model_save_path)
 
 
 def evaluate(data_iter, model, device, PAD_IDX):
@@ -126,5 +135,5 @@ def calculate(predict_labels, true_labels):
 
 
 if __name__ == '__main__':
-    config = Model_config()
+    config = Model_config(data_type='zh_ontonotes4')
     train(config)

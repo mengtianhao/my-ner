@@ -51,8 +51,10 @@ def get_all_labels(file_path):
 
 
 # 建立标签字典
-def build_label2id():
-    labels = ['[PAD]', '[CLS]', '[SEP]', 'O', 'B-NR', 'M-NR', 'E-NR', 'S-NR', 'B-NS', 'M-NS', 'E-NS', 'S-NS', 'B-NT', 'M-NT', 'E-NT', 'S-NT']
+def build_label2id(labels_name):
+    addition_labels = ['[PAD]', '[CLS]', '[SEP]']
+    labels = addition_labels + labels_name
+    # labels = ['[PAD]', '[CLS]', '[SEP]', 'O', 'B-NR', 'M-NR', 'E-NR', 'S-NR', 'B-NS', 'M-NS', 'E-NS', 'S-NS', 'B-NT', 'M-NT', 'E-NT', 'S-NT']
     label2id = {}
     for i in range(len(labels)):
         label2id[labels[i]] = i
@@ -68,9 +70,10 @@ class LoadDataset:
                  max_sen_len=None,
                  max_position_embeddings=512,
                  pad_index=0,
-                 is_sample_shuffle=True):
+                 is_sample_shuffle=True,
+                 labels_name=None):
         self.vocab = build_vocab(vocab_path)
-        self.label2id = build_label2id()
+        self.label2id = build_label2id(labels_name)
         self.PAD_IDX = pad_index
         self.SEP_IDX = self.vocab['[SEP]']
         self.CLS_IDX = self.vocab['[CLS]']
@@ -169,18 +172,18 @@ def pad_sequence(sequences, batch_first=False, max_len=None, padding_value=0):
 
 
 if __name__ == '__main__':
-    config = Model_config()
+    config = Model_config(data_type='zh_ontonotes4')
     load_dataset = LoadDataset(
         vocab_path=config.vocab_path,
         batch_size=config.batch_size,
         max_sen_len=config.max_sen_len,
         max_position_embeddings=config.max_position_embeddings,
         pad_index=config.pad_token_id,
-        is_sample_shuffle=config.is_sample_shuffle
-    )
-    train_iter, val_iter, test_iter = load_dataset.load_train_val_test_data(config.zh_msra_train_file_path,
-                                                                            config.zh_msra_val_file_path,
-                                                                            config.zh_msra_test_file_path)
+        is_sample_shuffle=config.is_sample_shuffle,
+        labels_name=config.labels_name)
+    train_iter, val_iter, test_iter = load_dataset.load_train_val_test_data(config.train_file_path,
+                                                                            config.val_file_path,
+                                                                            config.test_file_path)
     for sample, label in train_iter:
         print(sample.shape)  # [seq_len,batch_size]
         print(sample.transpose(0, 1))
@@ -189,5 +192,4 @@ if __name__ == '__main__':
         print(label.shape)
         print(label)
         break
-
 

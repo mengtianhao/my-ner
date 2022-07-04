@@ -22,14 +22,14 @@ def inference(config):
         max_sen_len=config.max_sen_len,
         max_position_embeddings=config.max_position_embeddings,
         pad_index=config.pad_token_id,
-        is_sample_shuffle=config.is_sample_shuffle
-    )
-    test_iter = data_loader.load_train_val_test_data(test_file_path=config.zh_msra_test_file_path,
+        is_sample_shuffle=config.is_sample_shuffle,
+        labels_name=config.labels_name)
+    test_iter = data_loader.load_train_val_test_data(test_file_path=config.test_file_path,
                                                      only_test=True)
     acc = evaluate(test_iter, model, device=config.device, PAD_IDX=data_loader.PAD_IDX)
     logging.info(f"Acc on test:{acc:.3f}")
 
 
 if __name__ == '__main__':
-    model_config = Model_config()
+    model_config = Model_config(data_type='zh_ontonotes4')
     inference(model_config)
