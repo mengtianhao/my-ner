@@ -1,4 +1,5 @@
 import torch
+import logging
 from tqdm import tqdm
 from collections import Counter
 from torch.utils.data import DataLoader
@@ -83,7 +84,7 @@ class LoadDataset:
 
     # 转换为token序列
     def data_process(self, file_path):
-        print(file_path)
+        logging.info(f"## 当前正在处理的数据集：{file_path} ")
         raw_iter = open(file_path, encoding='utf-8').readlines()
         data = []
         max_len = 0

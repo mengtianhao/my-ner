@@ -14,16 +14,20 @@ class Model_config:
         self.pretrained_model_dir = os.path.join(self.project_dir, 'bert-base-chinese')
         # Bert词典的路径
         self.vocab_path = os.path.join(self.pretrained_model_dir, 'vocab.txt')
-        # 数据集路径
-        self.zh_msra_dir = os.path.join(self.project_dir, 'Data', 'zh_msra')
         # 选择设备
         self.device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+        # zh_msra数据集
+        # zh_msra数据集文件夹路径
+        self.zh_msra_dir = os.path.join(self.project_dir, 'Data', 'zh_msra')
         # 训练集路径
         self.zh_msra_train_file_path = os.path.join(self.zh_msra_dir, 'train.char.bmes')
         # 验证集路径
         self.zh_msra_val_file_path = os.path.join(self.zh_msra_dir, 'dev.char.bmes')
         # 测试集路径
         self.zh_msra_test_file_path = os.path.join(self.zh_msra_dir, 'test.char.bmes')
+        #
+        # zh_ontonotes4数据集
+
         # 是否打乱数据集，仅针对训练集
         self.is_sample_shuffle = True
         # 标签种类数
