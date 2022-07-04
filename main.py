@@ -13,7 +13,7 @@ def train(config):
     max_acc = 0
     if os.path.exists(model_save_path):
         checkpoint = torch.load(model_save_path)
-        max_acc = checkpoint['max_acc'] # 加载上次的最好的正确率
+        max_acc = checkpoint['max_acc']  # 加载上次的最好的正确率
         loaded_paras = checkpoint['model_state_dict']
         model.load_state_dict(loaded_paras)
         logging.info("## 成功载入已有模型，进行追加训练......")
