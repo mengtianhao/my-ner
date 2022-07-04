@@ -212,10 +212,8 @@ class BertModel(nn.Module):
         # all_encoder_outputs 为一个包含有num_hidden_layers个层的输出
         sequence_output = all_encoder_outputs[-1]  # 取最后一层
         # sequence_output: [src_len, batch_size, hidden_size]
-        # pooled_output = self.bert_pooler(sequence_output)
-        pooled_output = sequence_output
-        # 默认是最后一层的first token 即[cls]位置经dense + tanh 后的结果
-        # pooled_output: [batch_size, hidden_size]
+        pooled_output = self.bert_pooler(sequence_output)
+        # pooled_output: [src_len, batch_size, hidden_size]
         return pooled_output, all_encoder_outputs
 
     @classmethod
