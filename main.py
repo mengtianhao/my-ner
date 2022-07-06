@@ -76,7 +76,7 @@ def train(config):
         config.writer.add_scalar('Training/Accuracy', train_acc, epoch)
         #
         if (epoch + 1) % config.model_val_per_epoch == 0:
-            acc = evaluate(val_iter, model, config.device, data_loader.PAD_IDX)
+            acc, _, _1 = evaluate(val_iter, model, config.device, data_loader.PAD_IDX)
             logging.info(f"Accuracy on val {acc:.3f}")
             config.writer.add_scalar('evaluating/Accuracy', acc, epoch)
             if acc > max_acc:
@@ -90,6 +90,8 @@ def evaluate(data_iter, model, device, PAD_IDX):
     model.eval()
     with torch.no_grad():
         true, n = 0, 0
+        total_true_label = []
+        total_predict_label = []
         for sample, label in data_iter:
             sample = sample.to(device)
             label = label.to(device)
@@ -101,8 +103,16 @@ def evaluate(data_iter, model, device, PAD_IDX):
             _, _true, _n = calculate(labels, label)
             true += _true
             n += _n
+            #
+            predict_label = [j for i in labels for j in i]
+            true_label = label.transpose(0, 1)
+            true_label = torch.as_tensor(true_label[true_label != 0]).to('cpu').numpy()
+            true_label = [i for i in true_label]
+            total_predict_label = total_predict_label + predict_label
+            total_true_label = total_true_label + true_label
+            #
         model.train()
-        return true / n
+        return true / n, total_predict_label, total_true_label
 
 
 # 计算预测精确度，按实体计算

@@ -1,10 +1,15 @@
+import logging
+import os
+
 import torch
 import torch.nn as nn
+import numpy as np
 from Model.BasicBert.Bert import BertModel
 from Model.Classifier.MyCRF import MyCRF
 from Config.Model_config import Model_config
 from utils.data_helpers import LoadDataset
 from Model.BiLSTM.BiLSTM import BiLSTM
+from sklearn.metrics import classification_report
 
 
 class BertForNER(nn.Module):
@@ -82,8 +87,14 @@ def calculate(predict_labels, true_labels):
 
 
 if __name__ == '__main__':
-    config = Model_config()
+    config = Model_config(data_type='zh_msra')
     model = BertForNER(config, config.pretrained_model_dir)
+    model_save_path = os.path.join(config.model_save_dir, 'model.pt')
+    if os.path.exists(model_save_path):
+        checkpoint = torch.load(model_save_path)
+        loaded_paras = checkpoint['model_state_dict']
+        model.load_state_dict(loaded_paras)
+        logging.info("## 成功载入已有模型，进行预测......")
     model = model.to(config.device)
     load_dataset = LoadDataset(
         vocab_path=config.vocab_path,
@@ -91,11 +102,12 @@ if __name__ == '__main__':
         max_sen_len=config.max_sen_len,
         max_position_embeddings=config.max_position_embeddings,
         pad_index=config.pad_token_id,
-        is_sample_shuffle=config.is_sample_shuffle
+        is_sample_shuffle=config.is_sample_shuffle,
+        labels_name=config.labels_name
     )
-    train_iter, val_iter, test_iter = load_dataset.load_train_val_test_data(config.zh_msra_train_file_path,
-                                                                            config.zh_msra_val_file_path,
-                                                                            config.zh_msra_test_file_path)
+    train_iter, val_iter, test_iter = load_dataset.load_train_val_test_data(config.train_file_path,
+                                                                            config.val_file_path,
+                                                                            config.test_file_path)
     for sample, label in train_iter:
         sample = sample.to(config.device)
         label = label.to(config.device)
@@ -105,7 +117,20 @@ if __name__ == '__main__':
                              token_type_ids=None,
                              position_ids=None,
                              labels=label)
-        print(loss)
-        # print(labels)
+        # print(loss)
+        true_labels = label.transpose(0, 1).to('cpu').numpy()
+        for i in range(len(true_labels)):
+            true_label = true_labels[i]
+            # 去掉真实标签中的padding项
+            true_label = torch.tensor(true_label[true_label != 0])
+            predict_label = torch.tensor(labels[i])
+            if i == 0:
+                true_label_total = true_label
+                predict_label_total = predict_label
+            else:
+                true_label_total = torch.cat((true_label_total, true_label), dim=0)
+                predict_label_total = torch.cat((predict_label_total, predict_label), dim=0)
+
+        print(classification_report(true_label, predict_label))
         # print(calculate(labels, label))
         break
